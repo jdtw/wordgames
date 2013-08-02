@@ -62,7 +62,7 @@ The `size` slot is the size of the board (defaults to 4).
 To fill the `data` slot, you can either use the `:data` initarg, in
 which case its length must be `(* size size)`:
 
-    (make-instance 'board :size 3 :data "foobars")
+    (make-instance 'board :size 3 :data "foobarbaz")
     
 or you can use the `:generator` key and supply a function which takes
 the row and column of the current position as arguments, and returns a
