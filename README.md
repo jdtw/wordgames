@@ -1,6 +1,9 @@
 WordGames
 =========
 
+Common Lisp solver of some common word games. (Because my wife is
+great at boggle, and I am most certainly not.)
+
 Currently contains a boggle solver, with plans to add a scrabble
 anagram solver and maybe some other stuff.
 
@@ -107,6 +110,14 @@ This does exactly what you'd expect.
     of         or         bo         ba         aa        
     ar         ab         za        
     NIL
+    
+## anagram package
+
+### solve
+
+    (solve string)
+    
+TODO
     
 ## License
 
