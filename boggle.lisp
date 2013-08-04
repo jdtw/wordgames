@@ -79,18 +79,19 @@
          (cons (1- i) (1- j)))))
 
 (defun play-boggle (board)
-  (labels ((move (pos current-word seen-before next-moves past-moves words)
+  (labels ((move (pos dirty current-word seen-before next-moves past-moves words)
              "Recursive backtracking implementation that finds words
               starting at 'pos'"
              (push (board-at board (car pos) (cdr pos)) current-word)
              (let ((word (coerce (reverse current-word) 'string)))
-               (when (word-p word)
+               (when (and (not dirty) (word-p word))
                  (push word words))
-               (if (or (not (prefix-p word)) (null next-moves))
+               (if (or (null next-moves) (not (prefix-p word)))
                    ;; backtrack if it's not a prefix or we're out of moves.
                    (if (null past-moves)
                        words ;; nowhere to backtrack to. We're done.
                        (move (caar past-moves)
+                             t
                              (cddr current-word)
                              (cdr seen-before)
                              (cdar past-moves)
@@ -103,6 +104,7 @@
                                                         (cdr next)
                                                         next-seen)))
                      (move next
+                           nil
                            current-word
                            next-seen
                            next-next-moves
@@ -114,7 +116,7 @@
                       (remove-duplicates 
                        (loop for i below (board-size board) append
                             (loop for j below (board-size board) append
-                                 (move (cons i j) nil nil (board-moves board i j) nil nil)))
+                                 (move (cons i j) nil nil nil (board-moves board i j) nil nil)))
                        :test #'equal)
                       #'> :key #'length)))
       (format t "~{~{~10a~^ ~}~^~%~}"
