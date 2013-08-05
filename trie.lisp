@@ -20,16 +20,16 @@
     :accessor node-eow)
    (children
     :initarg :children
-    :initform (make-hash-table :test #'eq)
+    :initform (make-hash-table :test #'eq :size 26)
     :accessor node-children)))
 
 (defmethod insert-char ((n node) char &optional eow)
-  (if (and eow (gethash char (node-children n) nil))
-      (progn
-        (setf (node-eow (gethash char (node-children n))) t)
-        (nth-value 0 (gethash char (node-children n))))
-      (setf (gethash char (node-children n))
-            (make-instance 'node :eow eow))))
+  (symbol-macrolet ((child (gethash char (node-children n) nil)))
+    (if child
+        (when eow
+          (setf (node-eow child) t)
+          (nth-value 0 child))
+        (setf child (make-instance 'node :eow eow)))))
 
 (defmethod find-char ((n node) char)
   (gethash char (node-children n) nil))
@@ -57,6 +57,10 @@
      finally (return current)))
 
 (defun build-trie (wordlist)
-  (declare (ignore wordlist))
-  (error "Not implemented"))
-
+  (setf *trie* (make-instance 'node))
+  (with-open-file (file wordlist :element-type 'base-char)
+    (loop
+       for line = (read-line file nil :eof)
+       until (eq line :eof)
+       do (let ((word (scan-to-strings "^([A-Z]{2,15})" line)))
+            (insert-string *trie* (string-downcase word))))))
