@@ -82,43 +82,60 @@
   (labels ((move (pos dirty current-word seen-before next-moves past-moves words)
              "Recursive backtracking implementation that finds words
               starting at 'pos'"
-             (push (board-at board (car pos) (cdr pos)) current-word)
-             (let ((word (coerce (reverse current-word) 'string)))
-               (when (and (not dirty) (word-p word))
-                 (push word words))
-               (if (or (null next-moves) (not (prefix-p word)))
-                   ;; backtrack if it's not a prefix or we're out of moves.
-                   (if (null past-moves)
-                       words ;; nowhere to backtrack to. We're done.
+             (vector-push-extend (board-at board (car pos) (cdr pos)) current-word)
+             (when (and (not dirty) (word-p current-word))
+               (push (make-array (length current-word)
+                                 :element-type 'standard-char
+                                 :initial-contents current-word)
+                     words))
+             (if (or (null next-moves) (not (prefix-p current-word)))
+                 ;; backtrack if it's not a prefix or we're out of moves.
+                 (if (null past-moves)
+                     words ;; nowhere to backtrack to. We're done.
+                     (progn
+                       (vector-pop current-word)
+                       (vector-pop current-word)
                        (move (caar past-moves)
                              t
-                             (cddr current-word)
+                             current-word
                              (cdr seen-before)
                              (cdar past-moves)
                              (cdr past-moves)
-                             words))
-                   (let* ((next (car next-moves))
-                          (next-seen (cons pos seen-before))
-                          (next-next-moves (board-moves board
-                                                        (car next)
-                                                        (cdr next)
-                                                        next-seen)))
-                     (move next
-                           nil
-                           current-word
-                           next-seen
-                           next-next-moves
-                           (cons (cons pos (cdr next-moves)) past-moves)
-                           words))))))
+                             words)))
+                 (let* ((next (car next-moves))
+                        (next-seen (cons pos seen-before))
+                        (next-next-moves (board-moves board
+                                                      (car next)
+                                                      (cdr next)
+                                                      next-seen)))
+                   (move next
+                         nil
+                         current-word
+                         next-seen
+                         next-next-moves
+                         (cons (cons pos (cdr next-moves)) past-moves)
+                         words)))))
     (board-print board)
     (terpri)
     (let ((word-list (sort 
                       (remove-duplicates 
                        (loop for i below (board-size board) append
                             (loop for j below (board-size board) append
-                                 (move (cons i j) nil nil nil (board-moves board i j) nil nil)))
+                                 (move (cons i j)
+                                       nil
+                                       (make-array 10
+                                                   :element-type 'standard-char
+                                                   :adjustable t
+                                                   :fill-pointer 0)
+                                       nil
+                                       (board-moves board i j)
+                                       nil
+                                       nil)))
                        :test #'equal)
                       #'> :key #'length)))
       (format t "~{~{~10a~^ ~}~^~%~}"
               (loop for i below (length word-list) by 5
                  collect (subseq word-list i (min (length word-list) (+ i 5))))))))
+
+
+
