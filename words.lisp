@@ -2,38 +2,21 @@
 
 (defpackage #:words
   (:use :cl :cl-ppcre)
-  (:export #:build-dicts
-           #:word-p
-           #:prefix-p
+  (:export #:initialize
+           #:find-string
            #:get-letter))
 
 (in-package #:words)
 
-(defparameter *prefix-dict* nil)
-(defparameter *word-dict* nil)
+(defgeneric find-string (store string))
+(defgeneric build (store path))
 
-(defun word-p (string)
-  (gethash (intern (string-upcase string)) *word-dict* nil))
-
-(defun prefix-p (string)
-  (gethash (intern (string-upcase string)) *prefix-dict* nil))
-
-(defun build-dicts (path)
-  (setf *prefix-dict* (make-hash-table)
-        *word-dict* (make-hash-table))
-  (labels ((prefixes (string)
-             (loop
-                for end from 1 to (1- (length string))
-                collect (intern (subseq string 0 end)))))
-    (with-open-file (ospd4 path :element-type 'base-char)
-      (loop
-         for line = (read-line ospd4 nil :eof)
-         until (eq line :eof)
-         do (let ((word (scan-to-strings "^([A-Z]{2,15})" line)))
-              (loop for sym in (prefixes word)
-                 do (setf (gethash sym *prefix-dict*) t))
-              (setf (gethash (intern word) *word-dict*) t)))))
-  (terpri))
+(defun initialize (path &optional (type :table))
+  (build (case type
+           (:table (make-hash-table :test #'eq :size 200000))
+           (:trie (make-instance 'node))
+           (otherwise (error "type must be either :table or :trie")))
+         path))
 
 (let ((freq-list '((#\a . 8.167)	
                    (#\b . 1.492)	

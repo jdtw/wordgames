@@ -6,8 +6,9 @@
   :author "John Wood"
   :license "MIT"
   :depends-on (#:cl-ppcre)
-  :components ((:file "trie")
-               (:file "words")
+  :components ((:file "words")
+               (:file "table")
+               (:file "trie")
                (:file "boggle")
                (:file "anagram")))
 
